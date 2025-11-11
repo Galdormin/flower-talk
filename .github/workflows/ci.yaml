@@ -1,0 +1,27 @@
+name: CI
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    tests:
+        runs-on: ubuntu-latest
+        env:
+            GODOT_VERSION: "4.5.1"
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Setup Godot
+              uses: chickensoft-games/setup-godot@v2
+              with:
+                  version: ${{ env.GODOT_VERSION }}
+                  use-dotnet: false
+
+            - name: Run tests
+              run: |
+                  godot --headless --import
+                  godot --headless --path . -s addons/gut/gut_cmdln.gd -gconfig res://test/gutconfig.json
