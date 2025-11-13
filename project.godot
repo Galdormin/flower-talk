@@ -11,12 +11,18 @@ config_version=5
 [application]
 
 config/name="Flower Talk"
+run/main_scene="uid://bbt0ovgbwjdvf"
 config/features=PackedStringArray("4.5", "GL Compatibility")
-config/icon="res://asset/icon.svg"
+config/icon="res://shared/assets/icon.svg"
+
+[autoload]
+
+DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
+Loggie="*res://addons/loggie/loggie.gd"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg")
+enabled=PackedStringArray("res://addons/GDQuest_GDScript_formatter/plugin.cfg", "res://addons/dialogue_manager/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/loggie/plugin.cfg")
 
 [rendering]
 

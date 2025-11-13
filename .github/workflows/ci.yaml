@@ -25,3 +25,53 @@ jobs:
               run: |
                   godot --headless --import
                   godot --headless --path . -s addons/gut/gut_cmdln.gd -gconfig res://test/gutconfig.json
+
+    lint:
+        runs-on: ubuntu-latest
+        env:
+            FORMATTER_URL: "https://api.github.com/repos/GDQuest/GDScript-formatter/releases/latest"
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v4
+
+            - name: Download GDScript Formatter
+              run: |
+                  release=$(curl -s ${{ env.FORMATTER_URL }})
+                  url=$(echo "$release" | grep browser_download_url | grep -i linux | cut -d '"' -f 4)
+
+                  if [ -z "$url" ]; then
+                      echo "❌ No Linux asset found in the latest release"
+                      exit 1
+                  fi
+
+                  echo "Downloading: $url"
+
+                  curl -L "$url" -o formatter.tar.gz
+                  mkdir gdformatter
+                  tar -xf formatter.tar.gz -C gdformatter
+
+                  # Find binary and add to PATH
+                  bin=$(find gdformatter -type f -name "gdscript-formatter" -o -name "gdscript-formatter-linux" | head -n 1)
+
+                  if [ -z "$bin" ]; then
+                      echo "❌ gdscript-formatter binary not found"
+                      exit 1
+                  fi
+
+                  chmod +x "$bin"
+                  echo "$(dirname "$bin")" >> $GITHUB_PATH
+
+            - name: Lint
+              shell: bash
+              run: |
+                  mapfile -t files < <(find . -type f -name "*.gd" \
+                      -not -path "*/addons/*" \
+                      -not -path "*/build/*" \
+                      -not -path "*/.git/*")
+
+                  if [ ${#files[@]} -eq 0 ]; then
+                      echo "No .gd files found (after exclusions)."
+                      exit 0
+                  fi
+
+                  gdscript-formatter lint --pretty "${files[@]}"
