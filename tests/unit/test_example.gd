@@ -1,5 +1,5 @@
 extends GutTest
 
 
-func testPasses():
+func test_passes():
     assert_eq(1, 1)
