@@ -24,7 +24,7 @@ jobs:
             - name: Run tests
               run: |
                   godot --headless --import
-                  godot --headless --path . -s addons/gut/gut_cmdln.gd -gconfig res://test/gutconfig.json
+                  godot --headless --path . -s addons/gut/gut_cmdln.gd -gconfig res://tests/gutconfig.json
 
     lint:
         runs-on: ubuntu-latest
@@ -37,21 +37,30 @@ jobs:
             - name: Download GDScript Formatter
               run: |
                   release=$(curl -s ${{ env.FORMATTER_URL }})
-                  url=$(echo "$release" | grep browser_download_url | grep -i linux | cut -d '"' -f 4)
 
-                  if [ -z "$url" ]; then
+                  echo "Available assets:"
+                  echo "$release" | jq -r '.assets[].name' >&2
+
+                  url=$(echo "$release" \
+                    | jq -r '.assets[]
+                        | select(.name | test("linux"; "i"))
+                        | select(.name | test("x86_64"; "i"))
+                        | .browser_download_url' \
+                    | head -n 1)
+
+                  if [ -z "$url" ] || [ "$url" = "null" ]; then
                       echo "❌ No Linux asset found in the latest release"
                       exit 1
                   fi
 
                   echo "Downloading: $url"
+                  curl -L "$url" -o formatter.zip
 
-                  curl -L "$url" -o formatter.tar.gz
                   mkdir gdformatter
-                  tar -xf formatter.tar.gz -C gdformatter
+                  unzip -q formatter.zip -d gdformatter
 
                   # Find binary and add to PATH
-                  bin=$(find gdformatter -type f -name "gdscript-formatter" -o -name "gdscript-formatter-linux" | head -n 1)
+                  bin=$(find gdformatter -type f | head -n 1)
 
                   if [ -z "$bin" ]; then
                       echo "❌ gdscript-formatter binary not found"
@@ -60,10 +69,13 @@ jobs:
 
                   chmod +x "$bin"
                   echo "$(dirname "$bin")" >> $GITHUB_PATH
+                  echo "FORMATTER_BIN=$(basename "$bin")" >> $GITHUB_ENV
 
             - name: Lint
               shell: bash
               run: |
+                  echo "Formatter name: $FORMATTER_BIN"
+
                   mapfile -t files < <(find . -type f -name "*.gd" \
                       -not -path "*/addons/*" \
                       -not -path "*/build/*" \
@@ -74,4 +86,4 @@ jobs:
                       exit 0
                   fi
 
-                  gdscript-formatter lint --pretty "${files[@]}"
+                  "$FORMATTER_BIN" lint --pretty "${files[@]}"
