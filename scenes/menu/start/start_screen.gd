@@ -19,11 +19,11 @@ func test_ok() -> int:
 
 
 func _on_quit_button_pressed() -> void:
-    Loggie.error("Not Implemented")
+    get_tree().quit(0)
 
 
 func _on_play_button_pressed() -> void:
-    Loggie.error("Not Implemented")
+    SceneManager.change_scene(SceneManager.Scene.INTRO)
 
 
 func _on_settings_button_pressed() -> void:
@@ -36,13 +36,3 @@ func _on_bug_report_button_pressed() -> void:
     var bug_report_window = bug_report_scene.instantiate()
     add_child(bug_report_window)
     bug_report_window.show()
-
-    #var report = CodecksUserReport.new(
-    #"rt_MYaPsFNHNv8xbNYLM9hr47ey",
-    #"This is a sample bug report.",
-    #CodecksUserReport.SEVERITY_NONE,
-    #"theo.plenet@gmail.com",
-    #)
-    #
-    #add_child(report)
-    #report.send()
